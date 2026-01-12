@@ -4,6 +4,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/../src/config/db.php';
 $article_id = $_POST['article_id'];
 
 $pdo->beginTransaction();
+
 try {
     // Handle file upload
     $file_name = null;
@@ -12,11 +13,22 @@ try {
         move_uploaded_file($_FILES['file']['tmp_name'], $_SERVER['DOCUMENT_ROOT'].'/uploads/articles/'.$file_name);
     }
 
-    // Update article
-    $sql = "UPDATE article SET journal_id=?, title=?, article_type=?, abstract=?, keywords=?, `references`=?, doi=?, pages=?";
-    $params = [$_POST['journal_id'], $_POST['title'], $_POST['article_type'], $_POST['abstract'], $_POST['keywords'], $_POST['references'], $_POST['doi'], $_POST['pages']];
+    // Update article (escape `references`)
+    $sql = "
+        UPDATE article SET journal_id=?, title=?, article_type=?, abstract=?, keywords=?, `references`=?, doi=?, pages=?
+    ";
+    $params = [
+        $_POST['journal_id'],
+        $_POST['title'],
+        $_POST['article_type'],
+        $_POST['abstract'],
+        $_POST['keywords'],
+        $_POST['references'],
+        $_POST['doi'],
+        $_POST['pages']
+    ];
 
-    if($file_name){
+    if ($file_name) {
         $sql .= ", file=?";
         $params[] = $file_name;
     }
@@ -26,15 +38,17 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
 
-    // Remove old author-institution links
+    // Remove old article-author-institution assignments
     $pdo->prepare("DELETE FROM article_author_institution WHERE article_id=?")->execute([$article_id]);
 
-    // Insert updated author-institution links
-    if(!empty($_POST['author_institution'])){
-        foreach($_POST['author_institution'] as $author_id => $institutions){
-            foreach($institutions as $inst_id){
-                $pdo->prepare("INSERT INTO article_author_institution (article_id, author_id, institution_id) VALUES (?, ?, ?)")
-                    ->execute([$article_id, $author_id, $inst_id]);
+    // Insert new article-author-institution assignments
+    if (!empty($_POST['author_institution'])) {
+        foreach ($_POST['author_institution'] as $author_id => $institution_ids) {
+            foreach ($institution_ids as $inst_id) {
+                $pdo->prepare("
+                    INSERT INTO article_author_institution (article_id, author_id, institution_id)
+                    VALUES (?, ?, ?)
+                ")->execute([$article_id, $author_id, $inst_id]);
             }
         }
     }
@@ -43,7 +57,7 @@ try {
     header('Location: index.php');
     exit;
 
-} catch(Exception $e){
+} catch (Exception $e) {
     $pdo->rollBack();
-    die("Error: ".$e->getMessage());
+    die("Error: " . $e->getMessage());
 }

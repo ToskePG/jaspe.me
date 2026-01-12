@@ -4,9 +4,6 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/../src/config/db.php';
 $pdo->beginTransaction();
 
 try {
-    // Save main article
-    $stmt = $pdo->prepare("INSERT INTO article (journal_id, title, article_type, abstract, keywords, `references`, doi, pages, file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
     // Handle file upload
     $file_name = null;
     if (!empty($_FILES['file']['name'])) {
@@ -14,6 +11,12 @@ try {
         move_uploaded_file($_FILES['file']['tmp_name'], $_SERVER['DOCUMENT_ROOT'] . '/uploads/articles/' . $file_name);
     }
 
+    // Insert main article (escape `references` column)
+    $stmt = $pdo->prepare("
+        INSERT INTO article 
+        (journal_id, title, article_type, abstract, keywords, `references`, doi, pages, file)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
     $stmt->execute([
         $_POST['journal_id'],
         $_POST['title'],
@@ -28,14 +31,16 @@ try {
 
     $article_id = $pdo->lastInsertId();
 
-    // Assign authors (institutions per author will be added later)
-    if (!empty($_POST['authors'])) {
-        foreach ($_POST['authors'] as $author_id) {
-            // Default institution assignment empty for now
-            // We can update this per article in future UI
-            // For now, just a placeholder
-            $stmt = $pdo->prepare("INSERT INTO article_author_institution (article_id, author_id, institution_id) VALUES (?, ?, ?)");
-            $stmt->execute([$article_id, $author_id, 1]); // assign first institution by default
+    // Assign authors + institutions
+    if (!empty($_POST['author_institution'])) {
+        // $_POST['author_institution'] = [ author_id => [institution_id1, institution_id2, ...], ... ]
+        foreach ($_POST['author_institution'] as $author_id => $institution_ids) {
+            foreach ($institution_ids as $inst_id) {
+                $pdo->prepare("
+                    INSERT INTO article_author_institution (article_id, author_id, institution_id)
+                    VALUES (?, ?, ?)
+                ")->execute([$article_id, $author_id, $inst_id]);
+            }
         }
     }
 

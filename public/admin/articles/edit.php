@@ -3,6 +3,7 @@ require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../layout/sidebar.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../src/config/db.php';
 
+// Get article ID
 $id = $_GET['id'] ?? null;
 if (!$id) die("Article ID missing");
 
@@ -12,20 +13,25 @@ $stmt->execute([$id]);
 $article = $stmt->fetch();
 if (!$article) die("Article not found");
 
-// Fetch all journals for select
+// Fetch all journals
 $journals = $pdo->query("SELECT * FROM journal ORDER BY year DESC, volume DESC, edition DESC")->fetchAll();
 
-// Fetch all authors for multi-select
+// Fetch all authors
 $authors = $pdo->query("SELECT * FROM author ORDER BY full_name ASC")->fetchAll();
 
 // Fetch all institutions
 $institutions = $pdo->query("SELECT * FROM institution ORDER BY institution_name ASC")->fetchAll();
 
-// Fetch assigned authors + institutions for this article
+// Fetch assigned authors & institutions for this article
 $stmt = $pdo->prepare("SELECT * FROM article_author_institution WHERE article_id = ?");
 $stmt->execute([$id]);
-$assigned = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC); 
-// $assigned[author_id] = array of assigned institutions
+$assigned_rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Organize assigned by author
+$assigned = [];
+foreach ($assigned_rows as $row) {
+    $assigned[$row['author_id']][] = $row['institution_id'];
+}
 ?>
 
 <div class="flex-grow-1 content">
@@ -44,7 +50,7 @@ $assigned = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC);
 
                     <div class="col-md-6">
                         <label class="form-label">Type</label>
-                        <input type="text" name="article_type" class="form-control" value="<?= htmlspecialchars($article['article_type']) ?>">
+                        <input type="text" name="article_type" class="form-control" value="<?= htmlspecialchars($article['article_type']) ?>" placeholder="Review / Original Paper">
                     </div>
 
                     <div class="col-md-6">
@@ -61,7 +67,7 @@ $assigned = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC);
 
                     <div class="col-md-6">
                         <label class="form-label">Pages / Ahead of Print</label>
-                        <input type="text" name="pages" class="form-control" value="<?= htmlspecialchars($article['pages']) ?>">
+                        <input type="text" name="pages" class="form-control" value="<?= htmlspecialchars($article['pages']) ?>" placeholder="47-65 or Ahead of Print">
                     </div>
 
                     <div class="col-md-12">
@@ -71,7 +77,7 @@ $assigned = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC);
 
                     <div class="col-md-12">
                         <label class="form-label">Keywords</label>
-                        <input type="text" name="keywords" class="form-control" value="<?= htmlspecialchars($article['keywords']) ?>">
+                        <input type="text" name="keywords" class="form-control" value="<?= htmlspecialchars($article['keywords']) ?>" placeholder="keyword1, keyword2">
                     </div>
 
                     <div class="col-md-12">
@@ -95,13 +101,7 @@ $assigned = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC);
                     <div class="col-md-12 mt-3">
                         <label class="form-label">Authors & Institutions</label>
                         <?php foreach($authors as $a): 
-                            // fetch institutions for this author in this article
-                            $selected_inst = [];
-                            if(isset($assigned[$a['author_id']])){
-                                foreach($assigned[$a['author_id']] as $row){
-                                    $selected_inst[] = $row['institution_id'];
-                                }
-                            }
+                            $selected_inst = $assigned[$a['author_id']] ?? [];
                         ?>
                             <div class="mb-2">
                                 <strong><?= htmlspecialchars($a['full_name']) ?></strong>
