@@ -1,0 +1,22 @@
+# Node / Composer / Vendor / Cache
+/vendor/
+/node_modules/
+*.log
+
+# Environment config files
+.env
+.env.local
+.env.*.local
+
+# PHP / Temporary files
+*.cache
+*.tmp
+*.bak
+*.swp
+
+# Uploaded files (do NOT commit PDFs)
+public/uploads/
+
+# OS-specific
+.DS_Store
+Thumbs.db
