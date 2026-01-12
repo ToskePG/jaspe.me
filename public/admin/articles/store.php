@@ -5,7 +5,7 @@ $pdo->beginTransaction();
 
 try {
     // Save main article
-    $stmt = $pdo->prepare("INSERT INTO article (journal_id, title, article_type, abstract, keywords, references, doi, pages, file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO article (journal_id, title, article_type, abstract, keywords, `references`, doi, pages, file) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     // Handle file upload
     $file_name = null;

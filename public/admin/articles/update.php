@@ -13,7 +13,7 @@ try {
     }
 
     // Update article
-    $sql = "UPDATE article SET journal_id=?, title=?, article_type=?, abstract=?, keywords=?, references=?, doi=?, pages=?";
+    $sql = "UPDATE article SET journal_id=?, title=?, article_type=?, abstract=?, keywords=?, `references`=?, doi=?, pages=?";
     $params = [$_POST['journal_id'], $_POST['title'], $_POST['article_type'], $_POST['abstract'], $_POST['keywords'], $_POST['references'], $_POST['doi'], $_POST['pages']];
 
     if($file_name){
