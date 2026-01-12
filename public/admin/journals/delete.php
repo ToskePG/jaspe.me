@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src/config/db.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/../src/config/db.php';
 
 $stmt = $pdo->prepare("DELETE FROM journal WHERE journal_id = ?");
 $stmt->execute([$_GET['id']]);

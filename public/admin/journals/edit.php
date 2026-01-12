@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../layout/sidebar.php';
-require_once __DIR__ . '/../../src/config/db.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/../src/config/db.php';
 
 $id = $_GET['id'];
 
