@@ -1,11 +1,9 @@
 <?php
-// Start session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Get current script path
-$current_page = $_SERVER['SCRIPT_NAME']; // e.g., /admin/journals/index.php
+$current_page = $_SERVER['SCRIPT_NAME'];
 ?>
 
 <div class="sidebar p-3">
@@ -40,6 +38,13 @@ $current_page = $_SERVER['SCRIPT_NAME']; // e.g., /admin/journals/index.php
         <li class="nav-item">
             <a href="/admin/authors/index.php" class="nav-link <?= strpos($current_page, '/admin/authors/') !== false ? 'active' : '' ?>">
                 <i class="bi bi-people me-2"></i> Authors
+            </a>
+        </li>
+
+        <!-- Institutions -->
+        <li class="nav-item">
+            <a href="/admin/institutions/index.php" class="nav-link <?= strpos($current_page, '/admin/institutions/') !== false ? 'active' : '' ?>">
+                <i class="bi bi-building me-2"></i> Institutions
             </a>
         </li>
 
