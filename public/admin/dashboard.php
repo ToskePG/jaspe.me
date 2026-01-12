@@ -1,32 +1,39 @@
 <?php
-session_start();
-
-// Protect the page
-if (!isset($_SESSION['admin_id'])) {
-    header('Location: login.php');
-    exit;
-}
+require_once __DIR__ . '/layout/header.php';
+require_once __DIR__ . '/layout/sidebar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard | JASPE</title>
-</head>
-<body>
+<div class="flex-grow-1 content">
+    <h2 class="mb-4">Dashboard</h2>
 
-<h1>Welcome, <?= htmlspecialchars($_SESSION['admin_username']) ?></h1>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Journals</h6>
+                    <h3>—</h3>
+                </div>
+            </div>
+        </div>
 
-<p>This is the admin dashboard.</p>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Articles</h6>
+                    <h3>—</h3>
+                </div>
+            </div>
+        </div>
 
-<ul>
-    <li><a href="#">Manage Journals</a></li>
-    <li><a href="#">Manage Articles</a></li>
-    <li><a href="#">Manage Authors</a></li>
-</ul>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Authors</h6>
+                    <h3>—</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<p><a href="logout.php">Logout</a></p>
-
-</body>
-</html>
+<?php require_once __DIR__ . '/layout/footer.php'; ?>

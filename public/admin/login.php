@@ -26,8 +26,8 @@ if (isset($_SESSION['admin_id'])) {
             border-radius: 8px;
         }
         .logo {
-            max-width: 160px;
-            margin-bottom: 20px;
+            max-width: 220px;
+            margin-bottom: 24px;
         }
     </style>
 </head>
