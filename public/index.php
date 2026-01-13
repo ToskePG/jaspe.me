@@ -1,147 +1,249 @@
 <?php
-// index.php
+require_once __DIR__ . '/src/config/db.php';
+
+/**
+ * 1. Get latest journal
+ */
+$journalStmt = $pdo->query("
+    SELECT *
+    FROM journal
+    ORDER BY year DESC, volume DESC, edition DESC
+    LIMIT 1
+");
+$journal = $journalStmt->fetch();
+
+if (!$journal) {
+    die('No journal found.');
+}
+
+/**
+ * 2. Get articles for this journal with authors
+ */
+$articleStmt = $pdo->prepare("
+    SELECT 
+        a.article_id,
+        a.title,
+        a.abstract,
+        a.article_type,
+        a.doi,
+        a.pages,
+        a.file,
+        GROUP_CONCAT(au.full_name ORDER BY aa.author_order SEPARATOR ', ') AS authors
+    FROM article a
+    LEFT JOIN article_author aa ON a.article_id = aa.article_id
+    LEFT JOIN author au ON aa.author_id = au.author_id
+    WHERE a.journal_id = ?
+    GROUP BY a.article_id
+    ORDER BY a.article_order ASC
+");
+$articleStmt->execute([$journal['journal_id']]);
+$articles = $articleStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body, html {
-            height: 100%;
-            font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            text-align: center;
-        }
+<meta charset="UTF-8">
+<title>JASPE Journal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* Container */
-        .coming-soon {
-            animation: fadeIn 1.5s ease-in-out;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-        /* Logo */
-        .coming-soon img {
-            width: 150px;
-            margin-bottom: 30px;
-            animation: logoBounce 2s infinite;
-        }
+<style>
+:root {
+    --bg: #0b0d1a;
+    --card: rgba(255,255,255,0.08);
+    --accent: #6c63ff;
+    --muted: #9fa3c7;
+    --text: #ffffff;
+}
 
-        /* Heading */
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
+* { box-sizing: border-box; }
 
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.8;
-        }
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0b0d1a, #151836);
+    color: var(--text);
+}
 
-        /* Countdown placeholder */
-        .countdown {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            font-size: 1.2rem;
-        }
+/* NAV */
+header {
+    padding: 24px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        .countdown div {
-            background: rgba(255,255,255,0.1);
-            padding: 15px 20px;
-            border-radius: 10px;
-            min-width: 70px;
-        }
+header img { height: 42px; }
 
-        .countdown div span {
-            display: block;
-            font-size: 2rem;
-            font-weight: bold;
-        }
+nav a {
+    margin-left: 36px;
+    color: var(--muted);
+    font-weight: 500;
+}
 
-        /* Footer */
-        footer {
-            margin-top: 50px;
-            font-size: 0.9rem;
-            opacity: 0.6;
-        }
+nav a:hover {
+    color: var(--accent);
+}
 
-        /* Animations */
-        @keyframes fadeIn {
-            from {opacity: 0;}
-            to {opacity: 1;}
-        }
+/* HERO */
+.hero {
+    max-width: 1300px;
+    margin: auto;
+    padding: 70px 80px;
+}
 
-        @keyframes logoBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-    </style>
+.hero h1 {
+    font-size: 3rem;
+    max-width: 800px;
+}
+
+.hero p {
+    color: var(--muted);
+    max-width: 600px;
+    margin-top: 18px;
+}
+
+/* ARTICLES */
+.section {
+    max-width: 1300px;
+    margin: auto;
+    padding: 60px 80px;
+}
+
+.section h2 {
+    font-size: 2rem;
+    margin-bottom: 40px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+/* ARTICLE CARD */
+.card {
+    background: var(--card);
+    border-radius: 22px;
+    padding: 28px;
+    backdrop-filter: blur(18px);
+    transition: transform .35s ease, box-shadow .35s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 40px 80px rgba(0,0,0,.4);
+}
+
+.card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.card .authors {
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+
+.card .abstract {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.meta {
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    color: #b6b9e5;
+}
+
+.card a {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    header, .hero, .section {
+        padding: 40px 30px;
+    }
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+}
+</style>
 </head>
 <body>
-    <div class="coming-soon">
-        <img src="assets/images/jaspe_logo.png" alt="Jaspe Logo">
-        <h1>Coming Soon</h1>
-        <p>We are working hard to launch our website. Stay tuned!</p>
 
-        <!-- Optional Countdown -->
-        <div class="countdown">
-            <div>
-                <span id="days">00</span>
-                Days
-            </div>
-            <div>
-                <span id="hours">00</span>
-                Hours
-            </div>
-            <div>
-                <span id="minutes">00</span>
-                Minutes
-            </div>
-            <div>
-                <span id="seconds">00</span>
-                Seconds
-            </div>
-        </div>
+<header>
+    <img src="assets/images/jaspe_logo.png" alt="JASPE">
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">Journal</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+    </nav>
+</header>
 
-        <footer>&copy; <?php echo date("Y"); ?> Jaspe. All rights reserved.</footer>
+<section class="hero">
+    <h1>Journal of Advanced Science, Policy & Engineering</h1>
+    <p>
+        Volume <?= $journal['volume']; ?> · Edition <?= $journal['edition']; ?>
+        (<?= htmlspecialchars($journal['period']); ?> <?= $journal['year']; ?>)
+    </p>
+</section>
+
+<section class="section">
+    <h2>Latest Articles</h2>
+
+    <div class="grid">
+        <?php foreach ($articles as $article): ?>
+            <div class="card">
+                <h3><?= htmlspecialchars($article['title']); ?></h3>
+
+                <div class="authors">
+                    <?= htmlspecialchars($article['authors']); ?>
+                </div>
+
+                <div class="abstract">
+                    <?= nl2br(htmlspecialchars($article['abstract'])); ?>
+                </div>
+
+                <div class="meta">
+                    <span><?= htmlspecialchars($article['article_type']); ?></span>
+                    <span><?= htmlspecialchars($article['pages']); ?></span>
+                </div>
+
+                <?php if ($article['file']): ?>
+                    <a href="<?= htmlspecialchars($article['file']); ?>" target="_blank">
+                        Read PDF
+                    </a>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
     </div>
+</section>
 
-    <script>
-        // Simple countdown timer
-        const launchDate = new Date("2026-01-15T00:00:00").getTime();
+<footer>
+    © <?= date('Y'); ?> JASPE Journal. All rights reserved.
+</footer>
 
-        const countdown = setInterval(() => {
-            const now = new Date().getTime();
-            const distance = launchDate - now;
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById("days").innerText = days.toString().padStart(2, '0');
-            document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
-            document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
-            document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
-
-            if (distance < 0) {
-                clearInterval(countdown);
-                document.querySelector(".coming-soon").innerHTML = "<h1>We're Live!</h1><p>Welcome to our website.</p>";
-            }
-        }, 1000);
-    </script>
 </body>
 </html>
