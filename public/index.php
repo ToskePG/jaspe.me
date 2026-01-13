@@ -1,5 +1,8 @@
 <?php
-require_once __DIR__ . '/src/config/db.php';
+require_once __DIR__ . '/../src/config/db.php';
+
+// Base folder for article files
+$baseUploads = 'uploads/'; // relative to public_html
 
 /**
  * 1. Get latest journal
@@ -66,6 +69,8 @@ body {
     color: var(--text);
 }
 
+a { text-decoration: none; color: inherit; }
+
 /* NAV */
 header {
     padding: 24px 80px;
@@ -82,9 +87,7 @@ nav a {
     font-weight: 500;
 }
 
-nav a:hover {
-    color: var(--accent);
-}
+nav a:hover { color: var(--accent); }
 
 /* HERO */
 .hero {
@@ -129,6 +132,10 @@ nav a:hover {
     padding: 28px;
     backdrop-filter: blur(18px);
     transition: transform .35s ease, box-shadow .35s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
 }
 
 .card:hover {
@@ -147,6 +154,12 @@ nav a:hover {
     margin-bottom: 12px;
 }
 
+.card .journal-info {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
 .card .abstract {
     color: var(--muted);
     font-size: 0.95rem;
@@ -161,7 +174,7 @@ nav a:hover {
     color: #b6b9e5;
 }
 
-.card a {
+.card .download-btn {
     display: inline-block;
     margin-top: 18px;
     padding: 10px 18px;
@@ -170,6 +183,7 @@ nav a:hover {
     color: #fff;
     font-weight: 600;
     font-size: 0.85rem;
+    text-align: center;
 }
 
 /* FOOTER */
@@ -181,19 +195,15 @@ footer {
 }
 
 @media (max-width: 768px) {
-    header, .hero, .section {
-        padding: 40px 30px;
-    }
-    .hero h1 {
-        font-size: 2.2rem;
-    }
+    header, .hero, .section { padding: 40px 30px; }
+    .hero h1 { font-size: 2.2rem; }
 }
 </style>
 </head>
 <body>
 
 <header>
-    <img src="assets/images/jaspe_logo.png" alt="JASPE">
+    <img src="assets/images/jaspe_logo-removebg-preview.png" alt="JASPE">
     <nav>
         <a href="#">Home</a>
         <a href="#">Journal</a>
@@ -203,7 +213,7 @@ footer {
 </header>
 
 <section class="hero">
-    <h1>Journal of Advanced Science, Policy & Engineering</h1>
+    <h1>Journal of Anthropology of Sport and Physical Education</h1>
     <p>
         Volume <?= $journal['volume']; ?> · Edition <?= $journal['edition']; ?>
         (<?= htmlspecialchars($journal['period']); ?> <?= $journal['year']; ?>)
@@ -214,12 +224,19 @@ footer {
     <h2>Latest Articles</h2>
 
     <div class="grid">
-        <?php foreach ($articles as $article): ?>
-            <div class="card">
+        <?php foreach ($articles as $article): 
+            $articleUrl = 'article.php?id=' . $article['article_id'];
+            $pdfUrl = $article['file'] ? $baseUploads . $article['file'] : null;
+        ?>
+            <div class="card" onclick="window.location='<?= $articleUrl ?>'">
                 <h3><?= htmlspecialchars($article['title']); ?></h3>
 
                 <div class="authors">
                     <?= htmlspecialchars($article['authors']); ?>
+                </div>
+
+                <div class="journal-info">
+                    Volume <?= $journal['volume']; ?> · Edition <?= $journal['edition']; ?> · <?= htmlspecialchars($journal['period']); ?> <?= $journal['year']; ?>
                 </div>
 
                 <div class="abstract">
@@ -231,9 +248,9 @@ footer {
                     <span><?= htmlspecialchars($article['pages']); ?></span>
                 </div>
 
-                <?php if ($article['file']): ?>
-                    <a href="<?= htmlspecialchars($article['file']); ?>" target="_blank">
-                        Read PDF
+                <?php if ($pdfUrl): ?>
+                    <a class="download-btn" href="<?= htmlspecialchars($pdfUrl); ?>" target="_blank" onclick="event.stopPropagation();">
+                        Download PDF
                     </a>
                 <?php endif; ?>
             </div>
